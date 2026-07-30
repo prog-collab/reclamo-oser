@@ -1,0 +1,757 @@
+<!doctype html>
+<html lang="es-AR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Panel del reclamo — Orquesta Sinfónica de Entre Ríos</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#1f3a5f" />
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+      /* --- barra superior --- */
+      .barra {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 18px;
+      }
+      .quien {
+        font-size: 0.85rem;
+        color: var(--tinta-tenue);
+      }
+
+      /* --- numeritos --- */
+      .numeros {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+        gap: 10px;
+        margin-bottom: 18px;
+      }
+      .numero {
+        background: var(--papel);
+        border: 1px solid var(--linea);
+        border-radius: 12px;
+        padding: 13px 14px;
+      }
+      .numero b {
+        display: block;
+        font-size: 1.65rem;
+        line-height: 1.1;
+        letter-spacing: -0.02em;
+      }
+      .numero span {
+        font-size: 0.78rem;
+        color: var(--tinta-tenue);
+      }
+
+      /* --- herramientas --- */
+      .herramientas {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 14px;
+      }
+      .herramientas input[type='search'] {
+        flex: 1 1 220px;
+        min-width: 0;
+      }
+
+      /* --- tabla --- */
+      .tabla-scroll {
+        overflow-x: auto;
+        background: var(--papel);
+        border: 1px solid var(--linea);
+        border-radius: var(--radio);
+        box-shadow: var(--sombra);
+        -webkit-overflow-scrolling: touch;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.88rem;
+        white-space: nowrap;
+      }
+      th,
+      td {
+        padding: 11px 13px;
+        text-align: left;
+        border-bottom: 1px solid var(--linea);
+        vertical-align: middle;
+      }
+      th {
+        background: var(--fondo);
+        font-size: 0.76rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--tinta-tenue);
+        position: sticky;
+        top: 0;
+        z-index: 1;
+      }
+      tbody tr:last-child td {
+        border-bottom: none;
+      }
+      /* La columna de acciones queda pegada a la derecha, asi los botones
+         siguen a la vista aunque la tabla haya que scrollearla. */
+      thead th:last-child,
+      tbody tr:not(.detalle-fila) td:last-child {
+        position: sticky;
+        right: 0;
+        border-left: 1px solid var(--linea);
+      }
+      tbody tr:not(.detalle-fila) td:last-child {
+        background: var(--papel);
+      }
+      thead th:last-child {
+        background: var(--fondo);
+        z-index: 2;
+      }
+      tbody tr.detalle-fila td {
+        white-space: normal;
+        background: var(--fondo);
+      }
+      .marca-si,
+      .marca-no {
+        display: inline-block;
+        padding: 2px 9px;
+        border-radius: 99px;
+        font-size: 0.76rem;
+        font-weight: 700;
+      }
+      .marca-si {
+        background: var(--bien-tenue);
+        color: var(--bien);
+      }
+      .marca-no {
+        background: var(--linea);
+        color: var(--tinta-tenue);
+      }
+      .celda-nombre {
+        font-weight: 650;
+      }
+      .acciones {
+        display: flex;
+        gap: 6px;
+      }
+
+      /* --- detalle de archivos --- */
+      .archivos-detalle {
+        display: grid;
+        gap: 14px;
+      }
+      .grupo-archivos h4 {
+        margin: 0 0 7px;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--tinta-tenue);
+      }
+      .grupo-archivos ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: 6px;
+      }
+      .grupo-archivos li {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+        background: var(--papel);
+        border: 1px solid var(--linea);
+        border-radius: 9px;
+        padding: 8px 11px;
+      }
+      .grupo-archivos .nombre-arch {
+        flex: 1 1 200px;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 0.86rem;
+      }
+      .vacio {
+        padding: 44px 20px;
+        text-align: center;
+        color: var(--tinta-tenue);
+      }
+      .cargando {
+        padding: 44px 20px;
+        text-align: center;
+        color: var(--tinta-tenue);
+      }
+      .login-caja {
+        max-width: 400px;
+        margin: 40px auto 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="envoltorio ancho" id="raiz">
+      <header class="tapa">
+        <div class="sello" aria-hidden="true">♪</div>
+        <div>
+          <h1>Panel del reclamo</h1>
+          <p>Orquesta Sinfónica de Entre Ríos — adhesiones recibidas</p>
+        </div>
+      </header>
+
+      <div id="cajaError" class="aviso malo oculto" role="alert"></div>
+      <div id="cajaOk" class="aviso bueno oculto" role="status"></div>
+
+      <!-- ENTRAR -->
+      <section class="tarjeta login-caja" id="pantallaLogin">
+        <h2>Entrar</h2>
+        <p class="ayuda">
+          Solo para quien lleva adelante el reclamo. Los datos y los archivos no se pueden ver sin
+          esta contraseña.
+        </p>
+        <form id="formLogin">
+          <div class="campos">
+            <div class="campo">
+              <label for="email">Email</label>
+              <input id="email" type="email" autocomplete="username" required />
+            </div>
+            <div class="campo">
+              <label for="password">Contraseña</label>
+              <input id="password" type="password" autocomplete="current-password" required />
+            </div>
+          </div>
+          <button type="submit" class="boton ancho" id="botonEntrar" style="margin-top: 16px">
+            Entrar
+          </button>
+        </form>
+      </section>
+
+      <!-- PANEL -->
+      <div id="pantallaPanel" class="oculto">
+        <div class="barra">
+          <span class="quien" id="quien"></span>
+          <button type="button" class="boton suave chico" id="botonSalir">Cerrar sesión</button>
+        </div>
+
+        <div class="numeros" id="numeros"></div>
+
+        <div class="herramientas">
+          <input type="search" id="buscador" placeholder="Buscar por nombre, DNI, CUIL, email…" />
+          <button type="button" class="boton chico" id="botonExcel">Exportar a Excel</button>
+          <button type="button" class="boton suave chico" id="botonZipTodo">
+            Descargar todos los archivos
+          </button>
+          <button type="button" class="boton suave chico" id="botonRefrescar">Actualizar</button>
+        </div>
+
+        <div class="tabla-scroll">
+          <div class="cargando" id="cargando">Cargando…</div>
+          <table id="tabla" class="oculto">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Nombre y apellido</th>
+                <th>DNI</th>
+                <th>CUIT / CUIL</th>
+                <th>Domicilio real</th>
+                <th>Teléfono</th>
+                <th>Email</th>
+                <th>ATE</th>
+                <th>UPCN</th>
+                <th>Archivos</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="cuerpo"></tbody>
+          </table>
+          <div class="vacio oculto" id="vacio">Todavía no hay adhesiones cargadas.</div>
+        </div>
+
+        <p class="pie" style="margin-top: 18px">
+          El Excel y el ZIP salen con lo que estés viendo en la tabla (respeta el buscador).
+        </p>
+      </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="sb.js"></script>
+    <script src="export.js"></script>
+    <script>
+      (function () {
+        const SB = window.SB;
+        const EX = window.EXPORTAR;
+
+        const pantallaLogin = document.getElementById('pantallaLogin');
+        const pantallaPanel = document.getElementById('pantallaPanel');
+        const cajaError = document.getElementById('cajaError');
+        const cajaOk = document.getElementById('cajaOk');
+        const cuerpo = document.getElementById('cuerpo');
+        const tabla = document.getElementById('tabla');
+        const cargando = document.getElementById('cargando');
+        const vacio = document.getElementById('vacio');
+        const buscador = document.getElementById('buscador');
+
+        let reclamos = [];
+        let abiertos = new Set();
+
+        // --- avisos ------------------------------------------------------------
+        function error(msg) {
+          cajaError.textContent = msg;
+          cajaError.classList.remove('oculto');
+          cajaOk.classList.add('oculto');
+        }
+        function ok(msg) {
+          cajaOk.textContent = msg;
+          cajaOk.classList.remove('oculto');
+          cajaError.classList.add('oculto');
+          setTimeout(() => cajaOk.classList.add('oculto'), 5000);
+        }
+        function limpiarAvisos() {
+          cajaError.classList.add('oculto');
+          cajaOk.classList.add('oculto');
+        }
+
+        // --- formato -----------------------------------------------------------
+        function fechaLegible(iso) {
+          const d = new Date(iso);
+          const p = (n) => String(n).padStart(2, '0');
+          return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()} ${p(d.getHours())}:${p(
+            d.getMinutes()
+          )}`;
+        }
+
+        function pesoLegible(bytes) {
+          if (!bytes) return '';
+          if (bytes < 1024) return bytes + ' B';
+          if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + ' KB';
+          return (bytes / 1024 / 1024).toFixed(1) + ' MB';
+        }
+
+        // Nombre de carpeta/archivo apto para cualquier sistema operativo.
+        function nombreSeguro(texto) {
+          return String(texto || '')
+            .replace(/[\\/:*?"<>|]/g, '-')
+            .replace(/\s+/g, ' ')
+            .trim()
+            .slice(0, 70) || 'sin-nombre';
+        }
+
+        function archivosDe(r, tipo) {
+          return (r.oser_reclamo_archivos || []).filter((a) => a.tipo === tipo);
+        }
+
+        // --- entrar / salir ----------------------------------------------------
+        document.getElementById('formLogin').addEventListener('submit', async (e) => {
+          e.preventDefault();
+          limpiarAvisos();
+          const boton = document.getElementById('botonEntrar');
+          boton.disabled = true;
+          boton.textContent = 'Entrando…';
+          try {
+            await SB.iniciarSesion(
+              document.getElementById('email').value,
+              document.getElementById('password').value
+            );
+            document.getElementById('password').value = '';
+            await arrancar();
+          } catch (err) {
+            error(
+              err.status === 400
+                ? 'Email o contraseña incorrectos.'
+                : 'No se pudo entrar: ' + (err.message || 'error de conexión')
+            );
+          } finally {
+            boton.disabled = false;
+            boton.textContent = 'Entrar';
+          }
+        });
+
+        document.getElementById('botonSalir').addEventListener('click', () => {
+          SB.cerrarSesion();
+          reclamos = [];
+          pantallaPanel.classList.add('oculto');
+          pantallaLogin.classList.remove('oculto');
+          limpiarAvisos();
+        });
+
+        // --- traer los datos ---------------------------------------------------
+        async function arrancar() {
+          limpiarAvisos();
+          if (!SB.sesion.access) {
+            pantallaLogin.classList.remove('oculto');
+            pantallaPanel.classList.add('oculto');
+            return;
+          }
+
+          let habilitado;
+          try {
+            habilitado = await SB.soyAdmin();
+          } catch (err) {
+            SB.cerrarSesion();
+            pantallaLogin.classList.remove('oculto');
+            pantallaPanel.classList.add('oculto');
+            if (err.status !== 401) error('No se pudo verificar tu usuario: ' + err.message);
+            return;
+          }
+
+          if (!habilitado) {
+            const mail = SB.sesion.email;
+            SB.cerrarSesion();
+            pantallaLogin.classList.remove('oculto');
+            pantallaPanel.classList.add('oculto');
+            error(
+              'El usuario ' +
+                mail +
+                ' no está habilitado para ver este panel. Pedí que te agreguen a la lista de acceso.'
+            );
+            return;
+          }
+
+          pantallaLogin.classList.add('oculto');
+          pantallaPanel.classList.remove('oculto');
+          document.getElementById('quien').textContent = 'Conectado como ' + SB.sesion.email;
+          await cargar();
+        }
+
+        async function cargar() {
+          cargando.classList.remove('oculto');
+          tabla.classList.add('oculto');
+          vacio.classList.add('oculto');
+          try {
+            reclamos = await SB.traerReclamos();
+            dibujar();
+          } catch (err) {
+            cargando.textContent = 'No se pudieron cargar los datos.';
+            error('Error al leer los datos: ' + (err.message || 'error de conexión'));
+          }
+        }
+
+        document.getElementById('botonRefrescar').addEventListener('click', cargar);
+
+        // --- filtro ------------------------------------------------------------
+        function filtrados() {
+          const q = buscador.value.trim().toLowerCase();
+          if (!q) return reclamos;
+          return reclamos.filter((r) =>
+            [r.nombre, r.dni, r.cuit, r.email, r.domicilio, r.telefono]
+              .join(' ')
+              .toLowerCase()
+              .includes(q)
+          );
+        }
+
+        buscador.addEventListener('input', dibujar);
+
+        // --- dibujar -----------------------------------------------------------
+        function dibujar() {
+          cargando.classList.add('oculto');
+          const lista = filtrados();
+
+          // numeritos (siempre sobre el total, no sobre el filtro)
+          const numeros = [
+            ['Adhesiones', reclamos.length],
+            ['Firmaron ATE', reclamos.filter((r) => r.firmo_ate).length],
+            ['Firmaron UPCN', reclamos.filter((r) => r.firmo_upcn).length],
+            ['Sin ningún gremio', reclamos.filter((r) => !r.firmo_ate && !r.firmo_upcn).length],
+            ['Con recibo', reclamos.filter((r) => archivosDe(r, 'recibo').length > 0).length],
+            [
+              'Archivos',
+              reclamos.reduce((n, r) => n + (r.oser_reclamo_archivos || []).length, 0),
+            ],
+          ];
+          document.getElementById('numeros').innerHTML = numeros
+            .map(([t, n]) => `<div class="numero"><b>${n}</b><span>${t}</span></div>`)
+            .join('');
+
+          if (!lista.length) {
+            tabla.classList.add('oculto');
+            vacio.classList.remove('oculto');
+            vacio.textContent = reclamos.length
+              ? 'Ninguna adhesión coincide con la búsqueda.'
+              : 'Todavía no hay adhesiones cargadas.';
+            return;
+          }
+
+          vacio.classList.add('oculto');
+          tabla.classList.remove('oculto');
+          cuerpo.innerHTML = '';
+
+          lista.forEach((r) => {
+            const recibos = archivosDe(r, 'recibo');
+            const antecedentes = archivosDe(r, 'antecedente');
+            const totalArch = recibos.length + antecedentes.length;
+
+            const tr = document.createElement('tr');
+            tr.innerHTML =
+              `<td>${fechaLegible(r.creado_en)}</td>` +
+              `<td class="celda-nombre"></td>` +
+              `<td></td><td></td><td></td><td></td><td></td>` +
+              `<td>${r.firmo_ate ? '<span class="marca-si">SÍ</span>' : '<span class="marca-no">NO</span>'}</td>` +
+              `<td>${r.firmo_upcn ? '<span class="marca-si">SÍ</span>' : '<span class="marca-no">NO</span>'}</td>` +
+              `<td></td><td></td>`;
+
+            const celdas = tr.children;
+            celdas[1].textContent = r.nombre;
+            celdas[2].textContent = r.dni;
+            celdas[3].textContent = r.cuit;
+            celdas[4].textContent = r.domicilio;
+            celdas[5].textContent = r.telefono;
+            celdas[6].textContent = r.email;
+
+            // columna de archivos
+            if (totalArch) {
+              const btn = document.createElement('button');
+              btn.type = 'button';
+              btn.className = 'boton suave chico';
+              btn.textContent = (abiertos.has(r.id) ? 'Ocultar ' : 'Ver ') + totalArch;
+              btn.addEventListener('click', () => {
+                if (abiertos.has(r.id)) abiertos.delete(r.id);
+                else abiertos.add(r.id);
+                dibujar();
+              });
+              celdas[9].appendChild(btn);
+            } else {
+              celdas[9].innerHTML = '<span class="marca-no">sin archivos</span>';
+            }
+
+            // acciones
+            const acciones = document.createElement('div');
+            acciones.className = 'acciones';
+            if (totalArch) {
+              const zip = document.createElement('button');
+              zip.type = 'button';
+              zip.className = 'boton suave chico';
+              zip.textContent = 'ZIP';
+              zip.title = 'Descargar los archivos de esta persona';
+              zip.addEventListener('click', () => zipDeUno(r, zip));
+              acciones.appendChild(zip);
+            }
+            const borrar = document.createElement('button');
+            borrar.type = 'button';
+            borrar.className = 'boton peligro chico';
+            borrar.textContent = 'Borrar';
+            borrar.addEventListener('click', () => borrarUno(r, borrar));
+            acciones.appendChild(borrar);
+            celdas[10].appendChild(acciones);
+
+            cuerpo.appendChild(tr);
+
+            // fila de detalle con los archivos
+            if (abiertos.has(r.id)) {
+              const trd = document.createElement('tr');
+              trd.className = 'detalle-fila';
+              const td = document.createElement('td');
+              td.colSpan = 11;
+              const cont = document.createElement('div');
+              cont.className = 'archivos-detalle';
+              [
+                ['Recibos de sueldo', recibos],
+                ['Antecedentes / capturas', antecedentes],
+              ].forEach(([titulo, archivos]) => {
+                if (!archivos.length) return;
+                const grupo = document.createElement('div');
+                grupo.className = 'grupo-archivos';
+                const h = document.createElement('h4');
+                h.textContent = titulo + ' (' + archivos.length + ')';
+                grupo.appendChild(h);
+                const ul = document.createElement('ul');
+                archivos.forEach((a) => {
+                  const li = document.createElement('li');
+                  const nom = document.createElement('span');
+                  nom.className = 'nombre-arch';
+                  nom.textContent = a.nombre_original;
+                  const peso = document.createElement('span');
+                  peso.className = 'peso';
+                  peso.style.color = 'var(--tinta-tenue)';
+                  peso.style.fontSize = '0.78rem';
+                  peso.textContent = pesoLegible(a.tamano);
+                  const bajar = document.createElement('button');
+                  bajar.type = 'button';
+                  bajar.className = 'boton suave chico';
+                  bajar.textContent = 'Descargar';
+                  bajar.addEventListener('click', async () => {
+                    bajar.disabled = true;
+                    try {
+                      const url = await SB.linkDescarga(a.path, a.nombre_original);
+                      window.open(url, '_blank');
+                    } catch (err) {
+                      error('No se pudo descargar: ' + err.message);
+                    } finally {
+                      bajar.disabled = false;
+                    }
+                  });
+                  li.appendChild(nom);
+                  li.appendChild(peso);
+                  li.appendChild(bajar);
+                  ul.appendChild(li);
+                });
+                grupo.appendChild(ul);
+                cont.appendChild(grupo);
+              });
+              td.appendChild(cont);
+              trd.appendChild(td);
+              cuerpo.appendChild(trd);
+            }
+          });
+        }
+
+        // --- borrar ------------------------------------------------------------
+        async function borrarUno(r, boton) {
+          const seguro = confirm(
+            'Borrar la adhesión de ' +
+              r.nombre +
+              ' (DNI ' +
+              r.dni +
+              ')?\n\nSe borran también sus archivos adjuntos. Esto no se puede deshacer.'
+          );
+          if (!seguro) return;
+          boton.disabled = true;
+          try {
+            await SB.borrarReclamo(
+              r.id,
+              (r.oser_reclamo_archivos || []).map((a) => a.path)
+            );
+            reclamos = reclamos.filter((x) => x.id !== r.id);
+            abiertos.delete(r.id);
+            dibujar();
+            ok('Adhesión borrada.');
+          } catch (err) {
+            boton.disabled = false;
+            error('No se pudo borrar: ' + err.message);
+          }
+        }
+
+        // --- Excel -------------------------------------------------------------
+        document.getElementById('botonExcel').addEventListener('click', async () => {
+          const lista = filtrados();
+          if (!lista.length) return error('No hay nada para exportar.');
+          const boton = document.getElementById('botonExcel');
+          boton.disabled = true;
+          try {
+            const columnas = [
+              { titulo: 'Fecha y hora', ancho: 17 },
+              { titulo: 'Nombre y apellido', ancho: 30 },
+              { titulo: 'DNI', ancho: 13 },
+              { titulo: 'CUIT / CUIL', ancho: 16 },
+              { titulo: 'Domicilio real', ancho: 40 },
+              { titulo: 'Teléfono', ancho: 16 },
+              { titulo: 'Email', ancho: 28 },
+              { titulo: 'Firmó ATE', ancho: 11 },
+              { titulo: 'Firmó UPCN', ancho: 12 },
+              { titulo: 'Recibos', ancho: 9 },
+              { titulo: 'Antecedentes', ancho: 13 },
+              { titulo: 'Archivos adjuntos', ancho: 50 },
+            ];
+            const filas = lista.map((r) => {
+              const recibos = archivosDe(r, 'recibo');
+              const antecedentes = archivosDe(r, 'antecedente');
+              return [
+                fechaLegible(r.creado_en),
+                r.nombre,
+                r.dni,
+                r.cuit,
+                r.domicilio,
+                r.telefono,
+                r.email,
+                r.firmo_ate ? 'SÍ' : 'NO',
+                r.firmo_upcn ? 'SÍ' : 'NO',
+                recibos.length,
+                antecedentes.length,
+                (r.oser_reclamo_archivos || []).map((a) => a.nombre_original).join(' | '),
+              ];
+            });
+            const blob = await EX.armarXlsx(columnas, filas, 'Reclamo OSER');
+            EX.bajar(blob, 'reclamo-oser-' + new Date().toISOString().slice(0, 10) + '.xlsx');
+          } catch (err) {
+            error('No se pudo armar el Excel: ' + err.message);
+          } finally {
+            boton.disabled = false;
+          }
+        });
+
+        // --- ZIP ---------------------------------------------------------------
+        async function juntarArchivos(lista, avisar) {
+          const entradas = [];
+          const fallados = [];
+          let hechos = 0;
+          const total = lista.reduce((n, r) => n + (r.oser_reclamo_archivos || []).length, 0);
+
+          for (const r of lista) {
+            const carpeta = nombreSeguro(r.nombre) + ' - ' + nombreSeguro(r.dni);
+            for (const a of r.oser_reclamo_archivos || []) {
+              if (avisar) avisar(++hechos, total);
+              try {
+                const blob = await SB.bajarArchivo(a.path);
+                const sub = a.tipo === 'recibo' ? 'recibo' : 'antecedente';
+                entradas.push({
+                  nombre: carpeta + '/' + sub + '-' + nombreSeguro(a.nombre_original),
+                  datos: blob,
+                });
+              } catch (err) {
+                fallados.push(a.nombre_original);
+              }
+            }
+          }
+          return { entradas, fallados };
+        }
+
+        async function zipDeUno(r, boton) {
+          const textoOriginal = boton.textContent;
+          boton.disabled = true;
+          boton.textContent = '…';
+          try {
+            const { entradas, fallados } = await juntarArchivos([r]);
+            if (!entradas.length) throw new Error('no se pudo bajar ningún archivo');
+            const blob = await EX.armarZip(entradas);
+            EX.bajar(blob, nombreSeguro(r.nombre) + ' - ' + nombreSeguro(r.dni) + '.zip');
+            if (fallados.length) error('Quedaron afuera del ZIP: ' + fallados.join(', '));
+          } catch (err) {
+            error('No se pudo armar el ZIP: ' + err.message);
+          } finally {
+            boton.disabled = false;
+            boton.textContent = textoOriginal;
+          }
+        }
+
+        document.getElementById('botonZipTodo').addEventListener('click', async () => {
+          const lista = filtrados().filter((r) => (r.oser_reclamo_archivos || []).length);
+          const boton = document.getElementById('botonZipTodo');
+          if (!lista.length) return error('No hay archivos para descargar.');
+
+          const total = lista.reduce((n, r) => n + r.oser_reclamo_archivos.length, 0);
+          if (
+            !confirm(
+              'Se van a bajar ' +
+                total +
+                ' archivo(s) de ' +
+                lista.length +
+                ' persona(s) y armar un ZIP.\n\nPuede tardar un rato. ¿Seguimos?'
+            )
+          )
+            return;
+
+          boton.disabled = true;
+          try {
+            const { entradas, fallados } = await juntarArchivos(lista, (hechos, tot) => {
+              boton.textContent = 'Bajando ' + hechos + ' de ' + tot + '…';
+            });
+            if (!entradas.length) throw new Error('no se pudo bajar ningún archivo');
+            boton.textContent = 'Armando el ZIP…';
+            const blob = await EX.armarZip(entradas);
+            EX.bajar(blob, 'reclamo-oser-archivos-' + new Date().toISOString().slice(0, 10) + '.zip');
+            if (fallados.length) error('Quedaron afuera del ZIP: ' + fallados.join(', '));
+            else ok('ZIP listo con ' + entradas.length + ' archivo(s).');
+          } catch (err) {
+            error('No se pudo armar el ZIP: ' + err.message);
+          } finally {
+            boton.disabled = false;
+            boton.textContent = 'Descargar todos los archivos';
+          }
+        });
+
+        // Arranque: si hay sesion guardada, entra directo.
+        arrancar();
+      })();
+    </script>
+  </body>
+</html>

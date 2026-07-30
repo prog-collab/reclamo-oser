@@ -1,0 +1,513 @@
+<!doctype html>
+<html lang="es-AR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Reclamo judicial conjunto — Orquesta Sinfónica de Entre Ríos</title>
+    <meta
+      name="description"
+      content="Formulario para sumarse al reclamo judicial conjunto de los trabajadores de la Orquesta Sinfónica de Entre Ríos."
+    />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#1f3a5f" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="envoltorio">
+      <header class="tapa">
+        <div class="sello" aria-hidden="true">♪</div>
+        <div>
+          <h1>Reclamo judicial conjunto</h1>
+          <p>Orquesta Sinfónica de Entre Ríos — planilla de adhesión</p>
+        </div>
+      </header>
+
+      <div id="cajaError" class="aviso malo oculto" role="alert"></div>
+
+      <form id="form" novalidate>
+        <section class="tarjeta">
+          <h2>Tus datos</h2>
+          <p class="ayuda">
+            Completá todo con los datos tal como figuran en tu DNI y en tu recibo de sueldo.
+          </p>
+
+          <div class="campos dos">
+            <div class="campo ancho-total" data-campo>
+              <label for="nombre">Nombre y apellido <span class="req">*</span></label>
+              <input id="nombre" name="nombre" type="text" autocomplete="name" required />
+              <p class="error-campo">Escribí tu nombre y apellido.</p>
+            </div>
+
+            <div class="campo" data-campo>
+              <label for="dni">DNI <span class="req">*</span></label>
+              <input id="dni" name="dni" type="text" inputmode="numeric" autocomplete="off" required />
+              <p class="error-campo">Escribí tu número de DNI.</p>
+            </div>
+
+            <div class="campo" data-campo>
+              <label for="cuit">CUIT / CUIL <span class="req">*</span></label>
+              <input
+                id="cuit"
+                name="cuit"
+                type="text"
+                inputmode="numeric"
+                placeholder="20-12345678-9"
+                autocomplete="off"
+                required
+              />
+              <p class="error-campo">Escribí tu CUIT o CUIL (11 números).</p>
+            </div>
+
+            <div class="campo ancho-total" data-campo>
+              <label for="domicilio">Domicilio real <span class="req">*</span></label>
+              <input
+                id="domicilio"
+                name="domicilio"
+                type="text"
+                placeholder="Calle, número, piso/depto, ciudad"
+                autocomplete="street-address"
+                required
+              />
+              <p class="error-campo">Escribí tu domicilio real.</p>
+            </div>
+
+            <div class="campo" data-campo>
+              <label for="telefono">Teléfono <span class="req">*</span></label>
+              <input
+                id="telefono"
+                name="telefono"
+                type="tel"
+                inputmode="tel"
+                placeholder="343 400 0000"
+                autocomplete="tel"
+                required
+              />
+              <p class="error-campo">Escribí un teléfono de contacto.</p>
+            </div>
+
+            <div class="campo" data-campo>
+              <label for="email">Email <span class="req">*</span></label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                inputmode="email"
+                autocomplete="email"
+                required
+              />
+              <p class="error-campo">Escribí un email válido.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="tarjeta">
+          <h2>Reclamos de los gremios</h2>
+          <p class="ayuda">Indicá si ya firmaste cada uno de estos reclamos.</p>
+
+          <div class="pregunta" data-campo>
+            <span>Firmaste el reclamo de ATE <span class="req">*</span></span>
+            <div class="opciones">
+              <label>
+                <input type="radio" name="ate" value="si" required />
+                <span>SÍ</span>
+              </label>
+              <label>
+                <input type="radio" name="ate" value="no" required />
+                <span>NO</span>
+              </label>
+            </div>
+            <p class="error-campo">Elegí SÍ o NO.</p>
+          </div>
+
+          <div class="pregunta" data-campo style="margin-top: 16px">
+            <span>Firmaste el reclamo de UPCN <span class="req">*</span></span>
+            <div class="opciones">
+              <label>
+                <input type="radio" name="upcn" value="si" required />
+                <span>SÍ</span>
+              </label>
+              <label>
+                <input type="radio" name="upcn" value="no" required />
+                <span>NO</span>
+              </label>
+            </div>
+            <p class="error-campo">Elegí SÍ o NO.</p>
+          </div>
+        </section>
+
+        <section class="tarjeta">
+          <h2>Recibo de sueldo</h2>
+          <p class="ayuda">
+            Podés sacarle una foto con el celular, elegir un archivo de la compu o arrastrarlo acá.
+            Imágenes o PDF, hasta 15 MB cada uno.
+          </p>
+
+          <div class="zona" id="zonaRecibo" tabindex="0" role="button" aria-controls="listaRecibo">
+            <span class="icono" aria-hidden="true">🧾</span>
+            <span class="titulo">Subí acá tu recibo de sueldo</span>
+            <span class="sub">Tocá para elegir, o arrastrá y soltá los archivos</span>
+          </div>
+          <input
+            id="inputRecibo"
+            type="file"
+            class="oculto"
+            multiple
+            accept="image/*,application/pdf"
+          />
+          <ul class="lista-archivos" id="listaRecibo"></ul>
+        </section>
+
+        <section class="tarjeta">
+          <h2>Antecedentes del adicional</h2>
+          <p class="ayuda">Todo lo que tengas sirve: recibos viejos, notas, mails, capturas de pantalla.</p>
+
+          <div class="zona" id="zonaAntecedente" tabindex="0" role="button" aria-controls="listaAntecedente">
+            <span class="icono" aria-hidden="true">📎</span>
+            <span class="titulo">Subí acá si tenés algún antecedente o captura de pantalla del adicional</span>
+            <span class="sub">Tocá para elegir, arrastrá y soltá, o pegá una captura con Ctrl+V</span>
+          </div>
+          <input
+            id="inputAntecedente"
+            type="file"
+            class="oculto"
+            multiple
+            accept="image/*,application/pdf"
+          />
+          <ul class="lista-archivos" id="listaAntecedente"></ul>
+        </section>
+
+        <button type="submit" class="boton ancho" id="botonEnviar">Enviar mi adhesión</button>
+        <div class="progreso oculto" id="progreso"><i></i></div>
+        <p class="ayuda" id="estado" style="text-align: center; margin-top: 10px"></p>
+      </form>
+
+      <section class="tarjeta listo oculto" id="pantallaListo">
+        <div class="tilde" aria-hidden="true">✓</div>
+        <h2>Listo, quedó registrada tu adhesión</h2>
+        <p id="textoListo">
+          Ya tenemos tus datos y tus archivos. Si hace falta algo más, te vamos a contactar por
+          teléfono o por email.
+        </p>
+      </section>
+
+      <p class="pie">
+        Tus datos se guardan cifrados y solo los ve quien lleva adelante el reclamo.<br />
+        No se comparten con nadie más.
+      </p>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="sb.js"></script>
+    <script>
+      (function () {
+        const cfg = window.RECLAMO_CONFIG;
+        const form = document.getElementById('form');
+        const cajaError = document.getElementById('cajaError');
+        const botonEnviar = document.getElementById('botonEnviar');
+        const progreso = document.getElementById('progreso');
+        const barra = progreso.querySelector('i');
+        const estado = document.getElementById('estado');
+
+        function pesoLegible(bytes) {
+          if (bytes < 1024) return bytes + ' B';
+          if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + ' KB';
+          return (bytes / 1024 / 1024).toFixed(1) + ' MB';
+        }
+
+        function mostrarError(msg) {
+          cajaError.textContent = msg;
+          cajaError.classList.remove('oculto');
+          cajaError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function limpiarError() {
+          cajaError.classList.add('oculto');
+          cajaError.textContent = '';
+        }
+
+        // --- zonas para subir archivos ---------------------------------------
+        function crearZona(idZona, idInput, idLista) {
+          const zona = document.getElementById(idZona);
+          const input = document.getElementById(idInput);
+          const lista = document.getElementById(idLista);
+          const elegidos = [];
+
+          function dibujar() {
+            lista.innerHTML = '';
+            elegidos.forEach((file, i) => {
+              const li = document.createElement('li');
+
+              const mini = document.createElement('div');
+              mini.className = 'miniatura';
+              if (file.type.startsWith('image/')) {
+                const img = document.createElement('img');
+                img.className = 'miniatura';
+                img.alt = '';
+                img.src = URL.createObjectURL(file);
+                img.onload = () => URL.revokeObjectURL(img.src);
+                li.appendChild(img);
+              } else {
+                mini.textContent = '📄';
+                li.appendChild(mini);
+              }
+
+              const datos = document.createElement('div');
+              datos.className = 'datos';
+              const nombre = document.createElement('div');
+              nombre.className = 'nombre';
+              nombre.textContent = file.name;
+              const peso = document.createElement('div');
+              peso.className = 'peso';
+              peso.textContent = pesoLegible(file.size);
+              datos.appendChild(nombre);
+              datos.appendChild(peso);
+              li.appendChild(datos);
+
+              const quitar = document.createElement('button');
+              quitar.type = 'button';
+              quitar.className = 'quitar';
+              quitar.textContent = '×';
+              quitar.setAttribute('aria-label', 'Quitar ' + file.name);
+              quitar.addEventListener('click', () => {
+                elegidos.splice(i, 1);
+                dibujar();
+              });
+              li.appendChild(quitar);
+
+              lista.appendChild(li);
+            });
+          }
+
+          function agregar(files) {
+            limpiarError();
+            const rechazados = [];
+            Array.from(files).forEach((file) => {
+              if (file.size > cfg.maxArchivoBytes) {
+                rechazados.push(file.name + ' (' + pesoLegible(file.size) + ')');
+                return;
+              }
+              // Evita duplicados si se suelta dos veces el mismo archivo.
+              const repetido = elegidos.some(
+                (f) => f.name === file.name && f.size === file.size && f.lastModified === file.lastModified
+              );
+              if (!repetido) elegidos.push(file);
+            });
+            if (rechazados.length) {
+              mostrarError(
+                'Estos archivos pesan más de ' +
+                  pesoLegible(cfg.maxArchivoBytes) +
+                  ' y no se pudieron agregar: ' +
+                  rechazados.join(', ') +
+                  '. Probá sacarles una foto de nuevo con menos calidad.'
+              );
+            }
+            dibujar();
+          }
+
+          zona.addEventListener('click', () => input.click());
+          zona.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              input.click();
+            }
+          });
+          input.addEventListener('change', () => {
+            agregar(input.files);
+            input.value = ''; // permite volver a elegir el mismo archivo
+          });
+
+          ['dragenter', 'dragover'].forEach((ev) =>
+            zona.addEventListener(ev, (e) => {
+              e.preventDefault();
+              zona.classList.add('encima');
+            })
+          );
+          ['dragleave', 'dragend'].forEach((ev) =>
+            zona.addEventListener(ev, () => zona.classList.remove('encima'))
+          );
+          zona.addEventListener('drop', (e) => {
+            e.preventDefault();
+            zona.classList.remove('encima');
+            if (e.dataTransfer && e.dataTransfer.files.length) agregar(e.dataTransfer.files);
+          });
+
+          return { elegidos, agregar };
+        }
+
+        const zonaRecibo = crearZona('zonaRecibo', 'inputRecibo', 'listaRecibo');
+        const zonaAntecedente = crearZona('zonaAntecedente', 'inputAntecedente', 'listaAntecedente');
+
+        // El navegador entero acepta arrastrar: evita que se abra el archivo en una pestana.
+        ['dragover', 'drop'].forEach((ev) =>
+          document.addEventListener(ev, (e) => {
+            if (!e.target.closest('.zona')) e.preventDefault();
+          })
+        );
+
+        // Pegar una captura de pantalla va a "antecedentes".
+        document.addEventListener('paste', (e) => {
+          const items = (e.clipboardData && e.clipboardData.files) || [];
+          if (items.length) zonaAntecedente.agregar(items);
+        });
+
+        // --- validacion -------------------------------------------------------
+        function contenedor(el) {
+          return el.closest('[data-campo]');
+        }
+
+        function marcar(el, ok) {
+          const caja = contenedor(el);
+          if (!caja) return;
+          caja.classList.toggle('con-error', !ok);
+          if (el.type !== 'radio') el.setAttribute('aria-invalid', ok ? 'false' : 'true');
+        }
+
+        const soloDigitos = (v) => (v || '').replace(/\D/g, '');
+
+        // Al salir del campo, damos formato al CUIT: 20-12345678-9
+        const inputCuit = document.getElementById('cuit');
+        inputCuit.addEventListener('blur', () => {
+          const d = soloDigitos(inputCuit.value);
+          if (d.length === 11) inputCuit.value = d.slice(0, 2) + '-' + d.slice(2, 10) + '-' + d.slice(10);
+        });
+
+        function validar() {
+          let primerError = null;
+
+          function revisar(id, ok) {
+            const el = document.getElementById(id);
+            marcar(el, ok);
+            if (!ok && !primerError) primerError = el;
+            return ok;
+          }
+
+          revisar('nombre', document.getElementById('nombre').value.trim().length >= 3);
+          revisar('dni', soloDigitos(document.getElementById('dni').value).length >= 6);
+          revisar('cuit', soloDigitos(document.getElementById('cuit').value).length === 11);
+          revisar('domicilio', document.getElementById('domicilio').value.trim().length >= 5);
+          revisar('telefono', soloDigitos(document.getElementById('telefono').value).length >= 6);
+          revisar('email', /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(document.getElementById('email').value.trim()));
+
+          ['ate', 'upcn'].forEach((nombre) => {
+            const grupo = form.querySelectorAll('input[name="' + nombre + '"]');
+            const elegido = Array.from(grupo).some((r) => r.checked);
+            marcar(grupo[0], elegido);
+            if (!elegido && !primerError) primerError = grupo[0];
+          });
+
+          if (primerError) {
+            const caja = contenedor(primerError) || primerError;
+            caja.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            if (primerError.type !== 'radio') primerError.focus({ preventScroll: true });
+            return false;
+          }
+          return true;
+        }
+
+        // Limpia la marca de error en cuanto la persona corrige.
+        form.addEventListener('input', (e) => {
+          const caja = contenedor(e.target);
+          if (caja) caja.classList.remove('con-error');
+        });
+
+        // --- nombres de archivo seguros para el storage -----------------------
+        function nombreSeguro(nombre) {
+          const limpio = nombre
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '') // saca acentos
+            .replace(/[^a-zA-Z0-9._-]+/g, '-')
+            .replace(/^-+|-+$/g, '');
+          return (limpio || 'archivo').slice(-80);
+        }
+
+        // --- enviar ------------------------------------------------------------
+        form.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          limpiarError();
+          if (!validar()) return;
+
+          const recibos = zonaRecibo.elegidos;
+          const antecedentes = zonaAntecedente.elegidos;
+
+          if (recibos.length === 0) {
+            const seguir = confirm(
+              'No adjuntaste ningún recibo de sueldo.\n\n' +
+                'El recibo es la prueba principal del reclamo. ¿Querés enviar igual y acercarlo después?'
+            );
+            if (!seguir) {
+              document.getElementById('zonaRecibo').scrollIntoView({ behavior: 'smooth', block: 'center' });
+              return;
+            }
+          }
+
+          const total = recibos.length + antecedentes.length;
+          botonEnviar.disabled = true;
+          progreso.classList.remove('oculto');
+          barra.style.width = '4%';
+          estado.textContent = 'Guardando tus datos…';
+
+          try {
+            const idReclamo = await window.SB.rpc('oser_crear_reclamo', {
+              p_nombre: document.getElementById('nombre').value,
+              p_dni: soloDigitos(document.getElementById('dni').value),
+              p_cuit: document.getElementById('cuit').value,
+              p_domicilio: document.getElementById('domicilio').value,
+              p_telefono: document.getElementById('telefono').value,
+              p_email: document.getElementById('email').value,
+              p_firmo_ate: form.querySelector('input[name="ate"]:checked').value === 'si',
+              p_firmo_upcn: form.querySelector('input[name="upcn"]:checked').value === 'si',
+            });
+
+            const tanda = [];
+            recibos.forEach((f, i) => tanda.push({ file: f, tipo: 'recibo', i }));
+            antecedentes.forEach((f, i) => tanda.push({ file: f, tipo: 'antecedente', i }));
+
+            const fallados = [];
+            for (let n = 0; n < tanda.length; n++) {
+              const { file, tipo, i } = tanda[n];
+              estado.textContent = 'Subiendo archivo ' + (n + 1) + ' de ' + total + '…';
+              const path = idReclamo + '/' + tipo + '/' + (i + 1) + '-' + nombreSeguro(file.name);
+              try {
+                await window.SB.subirArchivo(path, file);
+                await window.SB.rpc('oser_registrar_archivo', {
+                  p_reclamo_id: idReclamo,
+                  p_tipo: tipo,
+                  p_path: path,
+                  p_nombre_original: file.name,
+                  p_tamano: file.size,
+                  p_mime: file.type || '',
+                });
+              } catch (err) {
+                fallados.push(file.name);
+              }
+              barra.style.width = 4 + Math.round(((n + 1) / Math.max(total, 1)) * 96) + '%';
+            }
+
+            barra.style.width = '100%';
+            form.classList.add('oculto');
+            const pantalla = document.getElementById('pantallaListo');
+            if (fallados.length) {
+              document.getElementById('textoListo').textContent =
+                'Tus datos quedaron guardados. Pero ' +
+                fallados.length +
+                ' archivo(s) no se pudieron subir (' +
+                fallados.join(', ') +
+                '). Avisale a quien lleva el reclamo para acercarlos por otro medio.';
+            }
+            pantalla.classList.remove('oculto');
+            pantalla.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          } catch (err) {
+            progreso.classList.add('oculto');
+            estado.textContent = '';
+            botonEnviar.disabled = false;
+            mostrarError(
+              'No se pudo enviar: ' +
+                (err.message || 'error de conexión') +
+                '. Revisá que tengas internet y probá de nuevo.'
+            );
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>
