@@ -289,9 +289,17 @@
           function agregar(files) {
             limpiarError();
             const rechazados = [];
+            const vacios = [];
             Array.from(files).forEach((file) => {
               if (file.size > cfg.maxArchivoBytes) {
                 rechazados.push(file.name + ' (' + pesoLegible(file.size) + ')');
+                return;
+              }
+              // Un archivo de 0 bytes pasa el control de tamaño pero el servidor
+              // lo rechaza. Pasa en el celular cuando el archivo viene de una app
+              // que no lo entrega bien (Drive, WhatsApp, un PDF protegido).
+              if (file.size === 0) {
+                vacios.push(file.name);
                 return;
               }
               // Evita duplicados si se suelta dos veces el mismo archivo.
@@ -307,6 +315,13 @@
                   ' y no se pudieron agregar: ' +
                   rechazados.join(', ') +
                   '. Probá sacarles una foto de nuevo con menos calidad.'
+              );
+            } else if (vacios.length) {
+              mostrarError(
+                'Estos archivos llegaron vacíos (0 bytes): ' +
+                  vacios.join(', ') +
+                  '. Suele pasar cuando el archivo está en Drive o llegó por WhatsApp: ' +
+                  'bajalo primero al teléfono y adjuntalo de nuevo, o sacale una foto a la hoja.'
               );
             }
             dibujar();
@@ -476,18 +491,42 @@
               const { file, tipo, i } = tanda[n];
               estado.textContent = 'Subiendo archivo ' + (n + 1) + ' de ' + total + '…';
               const path = idReclamo + '/' + tipo + '/' + (i + 1) + '-' + nombreSeguro(file.name);
-              try {
-                await window.SB.subirArchivo(path, file);
-                await window.SB.rpc('oser_registrar_archivo', {
-                  p_reclamo_id: idReclamo,
-                  p_tipo: tipo,
-                  p_path: path,
-                  p_nombre_original: file.name,
-                  p_tamano: file.size,
-                  p_mime: file.type || '',
-                });
-              } catch (err) {
-                fallados.push(file.name);
+              let ultimoError = null;
+
+              // Dos intentos: que un bajón de señal no haga perder el archivo.
+              for (let intento = 1; intento <= 2; intento++) {
+                try {
+                  await window.SB.subirArchivo(path, file);
+                  await window.SB.rpc('oser_registrar_archivo', {
+                    p_reclamo_id: idReclamo,
+                    p_tipo: tipo,
+                    p_path: path,
+                    p_nombre_original: file.name,
+                    p_tamano: file.size,
+                    p_mime: file.type || '',
+                  });
+                  ultimoError = null;
+                  break;
+                } catch (err) {
+                  ultimoError = err;
+                  if (intento === 1) {
+                    estado.textContent = 'Reintentando el archivo ' + (n + 1) + '…';
+                    await new Promise((r) => setTimeout(r, 1200));
+                  }
+                }
+              }
+
+              if (ultimoError) {
+                // Guardamos el motivo que devuelve el servidor: sin esto no hay
+                // forma de saber por que fallo.
+                fallados.push(
+                  file.name +
+                    ' (' +
+                    pesoLegible(file.size) +
+                    (file.type ? ', ' + file.type : '') +
+                    ') → ' +
+                    (ultimoError.message || 'error desconocido')
+                );
               }
               barra.style.width = 4 + Math.round(((n + 1) / Math.max(total, 1)) * 96) + '%';
             }
@@ -497,11 +536,11 @@
             const pantalla = document.getElementById('pantallaListo');
             if (fallados.length) {
               document.getElementById('textoListo').textContent =
-                'Tus datos quedaron guardados. Pero ' +
+                'Tus datos quedaron guardados, pero ' +
                 fallados.length +
-                ' archivo(s) no se pudieron subir (' +
-                fallados.join(', ') +
-                '). Avisale a quien lleva el reclamo para acercarlos por otro medio.';
+                ' archivo(s) no se pudieron subir. Mandale este detalle a quien lleva el ' +
+                'reclamo y acercale los archivos por otro medio: ' +
+                fallados.join(' | ');
             }
             pantalla.classList.remove('oculto');
             pantalla.scrollIntoView({ behavior: 'smooth', block: 'center' });
