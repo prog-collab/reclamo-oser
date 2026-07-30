@@ -65,6 +65,8 @@ on conflict (email) do nothing;
 -- ---------------------------------------------------------------------------
 -- 2) Las adhesiones y sus archivos
 -- ---------------------------------------------------------------------------
+-- firmo_ate / firmo_upcn tienen tres valores: 'si', 'no' y 'no_se'
+-- ("No sé todavía", la tercera opcion del formulario).
 create table if not exists public.oser_reclamos (
   id uuid primary key default gen_random_uuid(),
   creado_en timestamptz not null default now(),
@@ -74,9 +76,17 @@ create table if not exists public.oser_reclamos (
   domicilio text not null,
   telefono text not null,
   email text not null,
-  firmo_ate boolean not null,
-  firmo_upcn boolean not null
+  firmo_ate text not null,
+  firmo_upcn text not null
 );
+
+alter table public.oser_reclamos
+  drop constraint if exists oser_reclamos_firmo_ate_check,
+  drop constraint if exists oser_reclamos_firmo_upcn_check;
+
+alter table public.oser_reclamos
+  add constraint oser_reclamos_firmo_ate_check check (firmo_ate in ('si', 'no', 'no_se')),
+  add constraint oser_reclamos_firmo_upcn_check check (firmo_upcn in ('si', 'no', 'no_se'));
 
 create table if not exists public.oser_reclamo_archivos (
   id uuid primary key default gen_random_uuid(),
@@ -122,6 +132,26 @@ create policy "oser admin borra archivos" on public.oser_reclamo_archivos
 -- ---------------------------------------------------------------------------
 -- 4) Alta de una adhesion (lo unico que puede hacer la clave anonima)
 -- ---------------------------------------------------------------------------
+-- Normaliza la respuesta de un gremio a 'si' / 'no' / 'no_se'.
+-- Acepta tambien 'true' y 'false', que es lo que mandaba la version del
+-- formulario anterior a la tercera opcion (enviaba un booleano JSON, y
+-- PostgREST lo convierte a texto). Se deja asi para que una pagina vieja
+-- cacheada en algun celular siga funcionando.
+create or replace function public.oser_normalizar_gremio(p_valor text)
+returns text
+language plpgsql
+immutable
+as $$
+declare
+  v text := lower(btrim(coalesce(p_valor, '')));
+begin
+  if v in ('si', 'true', 't', 'sí') then return 'si'; end if;
+  if v in ('no', 'false', 'f') then return 'no'; end if;
+  if v in ('no_se', 'no se', 'nose', 'no_sé') then return 'no_se'; end if;
+  raise exception 'Falta indicar si firmaste los reclamos de ATE y UPCN.';
+end;
+$$;
+
 create or replace function public.oser_crear_reclamo(
   p_nombre text,
   p_dni text,
@@ -129,8 +159,8 @@ create or replace function public.oser_crear_reclamo(
   p_domicilio text,
   p_telefono text,
   p_email text,
-  p_firmo_ate boolean,
-  p_firmo_upcn boolean
+  p_firmo_ate text,
+  p_firmo_upcn text
 ) returns uuid
 language plpgsql
 security definer
@@ -157,10 +187,6 @@ begin
   if coalesce(btrim(p_email), '') !~ '^[^@[:space:]]+@[^@[:space:]]+\.[^@[:space:]]+$' then
     raise exception 'El email no parece valido.';
   end if;
-  if p_firmo_ate is null or p_firmo_upcn is null then
-    raise exception 'Falta indicar si firmaste los reclamos de ATE y UPCN.';
-  end if;
-
   insert into public.oser_reclamos
     (nombre, dni, cuit, domicilio, telefono, email, firmo_ate, firmo_upcn)
   values (
@@ -170,8 +196,8 @@ begin
     left(btrim(p_domicilio), 300),
     left(btrim(p_telefono), 50),
     left(lower(btrim(p_email)), 200),
-    p_firmo_ate,
-    p_firmo_upcn
+    public.oser_normalizar_gremio(p_firmo_ate),
+    public.oser_normalizar_gremio(p_firmo_upcn)
   )
   returning id into v_id;
 
@@ -218,7 +244,8 @@ begin
 end;
 $$;
 
-grant execute on function public.oser_crear_reclamo(text, text, text, text, text, text, boolean, boolean) to anon, authenticated;
+grant execute on function public.oser_crear_reclamo(text, text, text, text, text, text, text, text) to anon, authenticated;
+grant execute on function public.oser_normalizar_gremio(text) to anon, authenticated;
 grant execute on function public.oser_registrar_archivo(uuid, text, text, text, bigint, text) to anon, authenticated;
 
 -- ---------------------------------------------------------------------------

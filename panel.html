@@ -114,12 +114,14 @@
         background: var(--fondo);
       }
       .marca-si,
-      .marca-no {
+      .marca-no,
+      .marca-quizas {
         display: inline-block;
         padding: 2px 9px;
         border-radius: 99px;
         font-size: 0.76rem;
         font-weight: 700;
+        white-space: nowrap;
       }
       .marca-si {
         background: var(--bien-tenue);
@@ -129,8 +131,19 @@
         background: var(--linea);
         color: var(--tinta-tenue);
       }
+      .marca-quizas {
+        background: var(--marca-tenue);
+        color: var(--bronce);
+      }
       .celda-nombre {
         font-weight: 650;
+      }
+      /* El domicilio es la columna mas larga: si no la dejamos cortar, la tabla
+         se va tan a lo ancho que la columna fija de acciones tapa la de archivos. */
+      .col-domicilio {
+        white-space: normal;
+        min-width: 190px;
+        max-width: 250px;
       }
       .acciones {
         display: flex;
@@ -253,7 +266,7 @@
                 <th>Nombre y apellido</th>
                 <th>DNI</th>
                 <th>CUIT / CUIL</th>
-                <th>Domicilio real</th>
+                <th class="col-domicilio">Domicilio real</th>
                 <th>Teléfono</th>
                 <th>Email</th>
                 <th>ATE</th>
@@ -338,6 +351,21 @@
 
         function archivosDe(r, tipo) {
           return (r.oser_reclamo_archivos || []).filter((a) => a.tipo === tipo);
+        }
+
+        // Las respuestas de los gremios son 'si' | 'no' | 'no_se'.
+        function textoGremio(v) {
+          if (v === 'si') return 'SÍ';
+          if (v === 'no') return 'NO';
+          if (v === 'no_se') return 'No sé todavía';
+          return '';
+        }
+
+        function chipGremio(v) {
+          if (v === 'si') return '<span class="marca-si">SÍ</span>';
+          if (v === 'no') return '<span class="marca-no">NO</span>';
+          if (v === 'no_se') return '<span class="marca-quizas">NO SÉ</span>';
+          return '';
         }
 
         // --- entrar / salir ----------------------------------------------------
@@ -450,9 +478,16 @@
           // numeritos (siempre sobre el total, no sobre el filtro)
           const numeros = [
             ['Adhesiones', reclamos.length],
-            ['Firmaron ATE', reclamos.filter((r) => r.firmo_ate).length],
-            ['Firmaron UPCN', reclamos.filter((r) => r.firmo_upcn).length],
-            ['Sin ningún gremio', reclamos.filter((r) => !r.firmo_ate && !r.firmo_upcn).length],
+            ['Firmaron ATE', reclamos.filter((r) => r.firmo_ate === 'si').length],
+            ['Firmaron UPCN', reclamos.filter((r) => r.firmo_upcn === 'si').length],
+            [
+              'Sin ningún gremio',
+              reclamos.filter((r) => r.firmo_ate === 'no' && r.firmo_upcn === 'no').length,
+            ],
+            [
+              'No saben',
+              reclamos.filter((r) => r.firmo_ate === 'no_se' || r.firmo_upcn === 'no_se').length,
+            ],
             ['Con recibo', reclamos.filter((r) => archivosDe(r, 'recibo').length > 0).length],
             [
               'Archivos',
@@ -485,9 +520,9 @@
             tr.innerHTML =
               `<td>${fechaLegible(r.creado_en)}</td>` +
               `<td class="celda-nombre"></td>` +
-              `<td></td><td></td><td></td><td></td><td></td>` +
-              `<td>${r.firmo_ate ? '<span class="marca-si">SÍ</span>' : '<span class="marca-no">NO</span>'}</td>` +
-              `<td>${r.firmo_upcn ? '<span class="marca-si">SÍ</span>' : '<span class="marca-no">NO</span>'}</td>` +
+              `<td></td><td></td><td class="col-domicilio"></td><td></td><td></td>` +
+              `<td>${chipGremio(r.firmo_ate)}</td>` +
+              `<td>${chipGremio(r.firmo_upcn)}</td>` +
               `<td></td><td></td>`;
 
             const celdas = tr.children;
@@ -636,8 +671,8 @@
               { titulo: 'Domicilio real', ancho: 40 },
               { titulo: 'Teléfono', ancho: 16 },
               { titulo: 'Email', ancho: 28 },
-              { titulo: 'Firmó ATE', ancho: 11 },
-              { titulo: 'Firmó UPCN', ancho: 12 },
+              { titulo: 'Firmó ATE', ancho: 15 },
+              { titulo: 'Firmó UPCN', ancho: 15 },
               { titulo: 'Recibos', ancho: 9 },
               { titulo: 'Antecedentes', ancho: 13 },
               { titulo: 'Archivos adjuntos', ancho: 50 },
@@ -653,8 +688,8 @@
                 r.domicilio,
                 r.telefono,
                 r.email,
-                r.firmo_ate ? 'SÍ' : 'NO',
-                r.firmo_upcn ? 'SÍ' : 'NO',
+                textoGremio(r.firmo_ate),
+                textoGremio(r.firmo_upcn),
                 recibos.length,
                 antecedentes.length,
                 (r.oser_reclamo_archivos || []).map((a) => a.nombre_original).join(' | '),

@@ -24,7 +24,9 @@ subiendo los archivos y listo. Anda igual en celular y en escritorio.
 Se les manda el link de `index.html`. Completan:
 
 - Nombre y apellido, DNI, CUIT/CUIL, domicilio real, teléfono y email.
-- Si firmaron el reclamo de ATE (SÍ/NO) y el de UPCN (SÍ/NO).
+- Si firmaron el reclamo de ATE y el de UPCN. Tres opciones cada uno: **SÍ**,
+  **NO** y **No sé todavía** (para el que no se acuerda o no está seguro, así no
+  tiene que inventar una respuesta).
 - **Subí acá tu recibo de sueldo** — foto del celu, archivo de la compu, o
   arrastrando y soltando.
 - **Subí acá si tenés algún antecedente o captura de pantalla del adicional** —

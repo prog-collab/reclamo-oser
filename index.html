@@ -115,8 +115,12 @@
                 <input type="radio" name="ate" value="no" required />
                 <span>NO</span>
               </label>
+              <label>
+                <input type="radio" name="ate" value="no_se" required />
+                <span>NO SÉ TODAVÍA</span>
+              </label>
             </div>
-            <p class="error-campo">Elegí SÍ o NO.</p>
+            <p class="error-campo">Elegí una de las tres opciones.</p>
           </div>
 
           <div class="pregunta" data-campo style="margin-top: 16px">
@@ -130,8 +134,12 @@
                 <input type="radio" name="upcn" value="no" required />
                 <span>NO</span>
               </label>
+              <label>
+                <input type="radio" name="upcn" value="no_se" required />
+                <span>NO SÉ TODAVÍA</span>
+              </label>
             </div>
-            <p class="error-campo">Elegí SÍ o NO.</p>
+            <p class="error-campo">Elegí una de las tres opciones.</p>
           </div>
         </section>
 
@@ -454,8 +462,9 @@
               p_domicilio: document.getElementById('domicilio').value,
               p_telefono: document.getElementById('telefono').value,
               p_email: document.getElementById('email').value,
-              p_firmo_ate: form.querySelector('input[name="ate"]:checked').value === 'si',
-              p_firmo_upcn: form.querySelector('input[name="upcn"]:checked').value === 'si',
+              // 'si' | 'no' | 'no_se'
+              p_firmo_ate: form.querySelector('input[name="ate"]:checked').value,
+              p_firmo_upcn: form.querySelector('input[name="upcn"]:checked').value,
             });
 
             const tanda = [];
