@@ -6,7 +6,12 @@
     <title>Panel del reclamo — Orquesta Sinfónica de Entre Ríos</title>
     <meta name="robots" content="noindex, nofollow" />
     <meta name="theme-color" content="#1f3a5f" />
-    <link rel="stylesheet" href="styles.css?v=2" />
+    <!-- Version de esta pagina: la compara recarga.js contra version.json. -->
+    <meta name="oser-version" content="3" />
+    <!-- Pedido (no garantizado) de que el navegador revalide el .html en vez de
+         sacarlo de su cache. El que realmente arregla el problema es recarga.js. -->
+    <meta http-equiv="cache-control" content="no-cache" />
+    <link rel="stylesheet" href="styles.css?v=3" />
     <style>
       /* --- barra superior --- */
       .barra {
@@ -282,13 +287,18 @@
 
         <p class="pie" style="margin-top: 18px">
           El Excel y el ZIP salen con lo que estés viendo en la tabla (respeta el buscador).
+          <br />
+          <!-- Sirve para darse cuenta de un vistazo si el navegador esta mostrando
+               una version vieja del panel. Tiene que coincidir con version.json. -->
+          <span class="pie-version">Panel versión 3</span>
         </p>
       </div>
     </div>
 
-    <script src="config.js?v=2"></script>
-    <script src="sb.js?v=2"></script>
-    <script src="export.js?v=2"></script>
+    <script src="recarga.js?v=3"></script>
+    <script src="config.js?v=3"></script>
+    <script src="sb.js?v=3"></script>
+    <script src="export.js?v=3"></script>
     <script>
       (function () {
         const SB = window.SB;
@@ -358,14 +368,17 @@
           if (v === 'si') return 'SÍ';
           if (v === 'no') return 'NO';
           if (v === 'no_se') return 'No sé todavía';
-          return '';
+          return '?';
         }
 
         function chipGremio(v) {
           if (v === 'si') return '<span class="marca-si">SÍ</span>';
           if (v === 'no') return '<span class="marca-no">NO</span>';
           if (v === 'no_se') return '<span class="marca-quizas">NO SÉ</span>';
-          return '';
+          // No deberia pasar (la base solo acepta esos tres valores), pero si
+          // alguna vez pasa preferimos una celda con un signo raro y no una
+          // celda vacia, que se lee como un dato que no esta.
+          return '<span class="marca-no">?</span>';
         }
 
         // --- entrar / salir ----------------------------------------------------

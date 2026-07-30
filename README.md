@@ -16,6 +16,8 @@ subiendo los archivos y listo. Anda igual en celular y en escritorio.
 | `config.js` | La URL de Supabase y la clave pública. |
 | `sb.js` | Cliente mínimo de Supabase hecho con `fetch`. |
 | `export.js` | Generador de `.xlsx` y `.zip` dentro del navegador. |
+| `recarga.js` | Recarga la página sola cuando quedó una versión vieja cacheada. |
+| `version.json` | El número de versión publicado (lo lee `recarga.js`). |
 | `styles.css` | Estilos compartidos por las dos páginas. |
 | `supabase/schema.sql` | Las tablas, funciones y permisos de la base (ya aplicados). |
 
@@ -106,6 +108,30 @@ Todo el detalle está comentado en `supabase/schema.sql`.
 
 Está publicado en GitHub Pages. Editás los archivos, los subís a `main` y a los
 pocos minutos queda online. No hay que compilar nada.
+
+**Al publicar un cambio hay que subir el número de versión.** GitHub Pages no
+deja mandar cabeceras propias, así que el navegador se guarda el `.html` y lo
+puede seguir mostrando después de haber publicado. Ya pasó una vez: con el panel
+viejo cacheado, las columnas de ATE y UPCN mostraban **SÍ** para cualquier
+respuesta (el panel viejo esperaba un booleano y ahora le llega texto, y en
+JavaScript `'no'` y `'no_se'` son cadenas no vacías, o sea verdaderas). Los datos
+en la base estaban bien; lo que estaba viejo era la página.
+
+Para que eso no vuelva a pasar, cada página declara su versión y `recarga.js`
+la compara contra `version.json`; si no coinciden, recarga sola con `?v=<número>`
+(una URL nueva, que el navegador está obligado a bajar). El formulario no se
+recarga si la persona ya empezó a completarlo, para no borrarle lo escrito.
+
+El número se sube en un solo lugar conceptual, pero hay que tocarlo en cuatro:
+
+1. `version.json`.
+2. El `<meta name="oser-version">` de `index.html` y el de `panel.html`.
+3. El `?v=` de los `<script>` y del `<link>` de las dos páginas.
+4. El "Panel versión N" del pie de `panel.html`.
+
+Si alguna vez el panel muestra algo raro, mirá ese número abajo de todo: si no
+coincide con `version.json`, el navegador está mostrando una copia vieja y se
+arregla con una recarga forzada (`Ctrl+Shift+R`, o `Cmd+Shift+R` en Mac).
 
 Para probar en tu máquina, cualquier servidor estático sirve:
 

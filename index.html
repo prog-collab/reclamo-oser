@@ -10,7 +10,12 @@
     />
     <meta name="robots" content="noindex, nofollow" />
     <meta name="theme-color" content="#1f3a5f" />
-    <link rel="stylesheet" href="styles.css?v=2" />
+    <!-- Version de esta pagina: la compara recarga.js contra version.json. -->
+    <meta name="oser-version" content="3" />
+    <!-- Pedido (no garantizado) de que el navegador revalide el .html en vez de
+         sacarlo de su cache. El que realmente arregla el problema es recarga.js. -->
+    <meta http-equiv="cache-control" content="no-cache" />
+    <link rel="stylesheet" href="styles.css?v=3" />
   </head>
   <body>
     <div class="envoltorio">
@@ -204,8 +209,9 @@
       </p>
     </div>
 
-    <script src="config.js?v=2"></script>
-    <script src="sb.js?v=2"></script>
+    <script src="recarga.js?v=3"></script>
+    <script src="config.js?v=3"></script>
+    <script src="sb.js?v=3"></script>
     <script>
       (function () {
         const cfg = window.RECLAMO_CONFIG;
@@ -427,10 +433,20 @@
           return true;
         }
 
+        // recarga.js recarga la pagina si hay una version mas nueva publicada.
+        // Mientras la persona esta completando el formulario no lo dejamos: se
+        // le borraria todo lo escrito. La proxima vez que lo abra se actualiza.
+        let empezado = false;
+        window.oserPuedeRecargar = () => !empezado;
+
         // Limpia la marca de error en cuanto la persona corrige.
         form.addEventListener('input', (e) => {
+          empezado = true;
           const caja = contenedor(e.target);
           if (caja) caja.classList.remove('con-error');
+        });
+        form.addEventListener('change', () => {
+          empezado = true;
         });
 
         // --- nombres de archivo seguros para el storage -----------------------
