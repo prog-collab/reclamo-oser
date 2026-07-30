@@ -69,6 +69,13 @@
   }
 
   // Sube un archivo al bucket privado.
+  //
+  // OJO: no mandar 'x-upsert'. Con upsert, Storage hace un
+  // "insert ... on conflict do update" sobre storage.objects, y Postgres exige
+  // ademas una policy de UPDATE; el rol anonimo solo tiene la de INSERT, asi que
+  // la subida fallaba con "new row violates row-level security policy" incluso
+  // cuando el archivo no existia. No hace falta upsert: la ruta lleva el id del
+  // reclamo y siempre es nueva.
   async function subirArchivo(path, file) {
     const res = await fetch(`${BASE}/storage/v1/object/${BUCKET}/${rutaEncoded(path)}`, {
       method: 'POST',
@@ -76,11 +83,17 @@
         apikey: KEY,
         Authorization: `Bearer ${KEY}`,
         'Content-Type': file.type || 'application/octet-stream',
-        'x-upsert': 'true',
       },
       body: file,
     });
-    if (!res.ok) throw await leerError(res);
+    // Si el archivo ya estaba (por ejemplo, el primer intento lo subio pero la
+    // respuesta nunca llego), lo damos por bueno en lugar de fallar el reintento.
+    if (res.status === 409) return path;
+    if (!res.ok) {
+      const err = await leerError(res);
+      if (/already exists|duplicate/i.test(err.message || '')) return path;
+      throw err;
+    }
     return path;
   }
 
