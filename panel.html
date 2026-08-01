@@ -7,11 +7,11 @@
     <meta name="robots" content="noindex, nofollow" />
     <meta name="theme-color" content="#1f3a5f" />
     <!-- Version de esta pagina: la compara recarga.js contra version.json. -->
-    <meta name="oser-version" content="3" />
+    <meta name="oser-version" content="4" />
     <!-- Pedido (no garantizado) de que el navegador revalide el .html en vez de
          sacarlo de su cache. El que realmente arregla el problema es recarga.js. -->
     <meta http-equiv="cache-control" content="no-cache" />
-    <link rel="stylesheet" href="styles.css?v=3" />
+    <link rel="stylesheet" href="styles.css?v=4" />
     <style>
       /* --- barra superior --- */
       .barra {
@@ -242,6 +242,53 @@
             Entrar
           </button>
         </form>
+        <p class="ayuda" style="margin-top: 14px; text-align: center">
+          <a href="#" id="linkOlvide">Olvidé mi contraseña</a>
+        </p>
+      </section>
+
+      <!-- PEDIR EL MAIL DE RECUPERACION -->
+      <section class="tarjeta login-caja oculto" id="pantallaOlvide">
+        <h2>Recuperar la contraseña</h2>
+        <p class="ayuda">
+          Te mandamos un mail con un link para poner una contraseña nueva. El link sirve una sola
+          vez y vence en una hora: abrilo apenas te llegue, desde este mismo teléfono o computadora.
+        </p>
+        <form id="formOlvide">
+          <div class="campos">
+            <div class="campo">
+              <label for="emailOlvide">Email</label>
+              <input id="emailOlvide" type="email" autocomplete="username" required />
+            </div>
+          </div>
+          <button type="submit" class="boton ancho" id="botonEnviarMail" style="margin-top: 16px">
+            Enviarme el link
+          </button>
+        </form>
+        <p class="ayuda" style="margin-top: 14px; text-align: center">
+          <a href="#" id="linkVolverLogin">Volver</a>
+        </p>
+      </section>
+
+      <!-- PONER LA CONTRASENA NUEVA (se llega desde el link del mail) -->
+      <section class="tarjeta login-caja oculto" id="pantallaNueva">
+        <h2>Nueva contraseña</h2>
+        <p class="ayuda" id="quienCambia"></p>
+        <form id="formNueva">
+          <div class="campos">
+            <div class="campo">
+              <label for="pass1">Contraseña nueva</label>
+              <input id="pass1" type="password" autocomplete="new-password" minlength="8" required />
+            </div>
+            <div class="campo">
+              <label for="pass2">Repetila</label>
+              <input id="pass2" type="password" autocomplete="new-password" minlength="8" required />
+            </div>
+          </div>
+          <button type="submit" class="boton ancho" id="botonGuardarPass" style="margin-top: 16px">
+            Guardar y entrar
+          </button>
+        </form>
       </section>
 
       <!-- PANEL -->
@@ -290,21 +337,23 @@
           <br />
           <!-- Sirve para darse cuenta de un vistazo si el navegador esta mostrando
                una version vieja del panel. Tiene que coincidir con version.json. -->
-          <span class="pie-version">Panel versión 3</span>
+          <span class="pie-version">Panel versión 4</span>
         </p>
       </div>
     </div>
 
-    <script src="recarga.js?v=3"></script>
-    <script src="config.js?v=3"></script>
-    <script src="sb.js?v=3"></script>
-    <script src="export.js?v=3"></script>
+    <script src="recarga.js?v=4"></script>
+    <script src="config.js?v=4"></script>
+    <script src="sb.js?v=4"></script>
+    <script src="export.js?v=4"></script>
     <script>
       (function () {
         const SB = window.SB;
         const EX = window.EXPORTAR;
 
         const pantallaLogin = document.getElementById('pantallaLogin');
+        const pantallaOlvide = document.getElementById('pantallaOlvide');
+        const pantallaNueva = document.getElementById('pantallaNueva');
         const pantallaPanel = document.getElementById('pantallaPanel');
         const cajaError = document.getElementById('cajaError');
         const cajaOk = document.getElementById('cajaOk');
@@ -316,6 +365,29 @@
 
         let reclamos = [];
         let abiertos = new Set();
+
+        // --- pantallas ---------------------------------------------------------
+        // Solo una visible a la vez: 'login' | 'olvide' | 'nueva' | 'panel'.
+        const PANTALLAS = {
+          login: pantallaLogin,
+          olvide: pantallaOlvide,
+          nueva: pantallaNueva,
+          panel: pantallaPanel,
+        };
+        let pantallaActual = 'login';
+
+        function mostrar(cual) {
+          pantallaActual = cual;
+          Object.keys(PANTALLAS).forEach((k) => {
+            PANTALLAS[k].classList.toggle('oculto', k !== cual);
+          });
+        }
+
+        // recarga.js no debe recargar la pagina mientras alguien esta poniendo su
+        // contrasena nueva: el link del mail sirve una sola vez.
+        window.oserPuedeRecargar = function () {
+          return pantallaActual !== 'nueva';
+        };
 
         // --- avisos ------------------------------------------------------------
         function error(msg) {
@@ -410,17 +482,113 @@
         document.getElementById('botonSalir').addEventListener('click', () => {
           SB.cerrarSesion();
           reclamos = [];
-          pantallaPanel.classList.add('oculto');
-          pantallaLogin.classList.remove('oculto');
+          mostrar('login');
           limpiarAvisos();
         });
+
+        // --- recuperar la contrasena -------------------------------------------
+
+        // A donde tiene que volver el link del mail: esta misma pagina, sin ?v= ni #.
+        function urlDeVuelta() {
+          return location.origin + location.pathname;
+        }
+
+        document.getElementById('linkOlvide').addEventListener('click', (e) => {
+          e.preventDefault();
+          limpiarAvisos();
+          document.getElementById('emailOlvide').value = document.getElementById('email').value;
+          mostrar('olvide');
+        });
+
+        document.getElementById('linkVolverLogin').addEventListener('click', (e) => {
+          e.preventDefault();
+          limpiarAvisos();
+          mostrar('login');
+        });
+
+        document.getElementById('formOlvide').addEventListener('submit', async (e) => {
+          e.preventDefault();
+          limpiarAvisos();
+          const boton = document.getElementById('botonEnviarMail');
+          boton.disabled = true;
+          boton.textContent = 'Enviando…';
+          try {
+            await SB.pedirRecuperacion(document.getElementById('emailOlvide').value, urlDeVuelta());
+            mostrar('login');
+            // Supabase responde lo mismo exista o no el usuario, para no revelar
+            // que direcciones estan dadas de alta. El mensaje acompana eso.
+            ok('Si ese email tiene acceso al panel, ya te llegó el link. Revisá también el correo no deseado.');
+          } catch (err) {
+            error(
+              err.status === 429
+                ? 'Ya se pidió un mail hace poco. Esperá un minuto y probá de nuevo.'
+                : 'No se pudo enviar el mail: ' + (err.message || 'error de conexión')
+            );
+          } finally {
+            boton.disabled = false;
+            boton.textContent = 'Enviarme el link';
+          }
+        });
+
+        document.getElementById('formNueva').addEventListener('submit', async (e) => {
+          e.preventDefault();
+          limpiarAvisos();
+          const p1 = document.getElementById('pass1').value;
+          const p2 = document.getElementById('pass2').value;
+          if (p1 !== p2) return error('Las dos contraseñas no son iguales.');
+          if (p1.length < 8) return error('La contraseña tiene que tener al menos 8 caracteres.');
+
+          const boton = document.getElementById('botonGuardarPass');
+          boton.disabled = true;
+          boton.textContent = 'Guardando…';
+          try {
+            await SB.cambiarPassword(p1);
+            document.getElementById('pass1').value = '';
+            document.getElementById('pass2').value = '';
+            await arrancar();
+            ok('Contraseña cambiada. La próxima vez entrá con esta.');
+          } catch (err) {
+            error('No se pudo cambiar la contraseña: ' + (err.message || 'error de conexión'));
+          } finally {
+            boton.disabled = false;
+            boton.textContent = 'Guardar y entrar';
+          }
+        });
+
+        // Devuelve true si la URL venia de un link del mail (ya sea bueno o vencido)
+        // y por lo tanto no hay que seguir con el arranque normal.
+        async function atenderLinkDelMail() {
+          const dato = SB.leerHashDeRecuperacion();
+          if (!dato) return false;
+          SB.limpiarHash();
+
+          if (dato.error) {
+            mostrar('olvide');
+            error(
+              dato.error === 'otp_expired'
+                ? 'Ese link ya venció o ya se usó. Pedí uno nuevo acá abajo y abrilo apenas te llegue.'
+                : 'El link no sirvió: ' + (dato.descripcion || dato.error) + '. Pedí uno nuevo.'
+            );
+            return true;
+          }
+
+          try {
+            const user = await SB.tomarSesionDeRecuperacion(dato);
+            document.getElementById('quienCambia').textContent =
+              'Estás poniendo una contraseña nueva para ' + (user.email || 'tu usuario') + '.';
+            mostrar('nueva');
+          } catch (err) {
+            mostrar('olvide');
+            error('El link ya no sirve. Pedí uno nuevo acá abajo.');
+          }
+          return true;
+        }
 
         // --- traer los datos ---------------------------------------------------
         async function arrancar() {
           limpiarAvisos();
           if (!SB.sesion.access) {
-            pantallaLogin.classList.remove('oculto');
-            pantallaPanel.classList.add('oculto');
+            mostrar('login');
             return;
           }
 
@@ -429,8 +597,7 @@
             habilitado = await SB.soyAdmin();
           } catch (err) {
             SB.cerrarSesion();
-            pantallaLogin.classList.remove('oculto');
-            pantallaPanel.classList.add('oculto');
+            mostrar('login');
             if (err.status !== 401) error('No se pudo verificar tu usuario: ' + err.message);
             return;
           }
@@ -438,8 +605,7 @@
           if (!habilitado) {
             const mail = SB.sesion.email;
             SB.cerrarSesion();
-            pantallaLogin.classList.remove('oculto');
-            pantallaPanel.classList.add('oculto');
+            mostrar('login');
             error(
               'El usuario ' +
                 mail +
@@ -448,8 +614,7 @@
             return;
           }
 
-          pantallaLogin.classList.add('oculto');
-          pantallaPanel.classList.remove('oculto');
+          mostrar('panel');
           document.getElementById('quien').textContent = 'Conectado como ' + SB.sesion.email;
           await cargar();
         }
@@ -797,8 +962,12 @@
           }
         });
 
-        // Arranque: si hay sesion guardada, entra directo.
-        arrancar();
+        // Arranque: primero miramos si venimos del link del mail; si no, y hay
+        // sesion guardada, entra directo.
+        (async function () {
+          if (await atenderLinkDelMail()) return;
+          await arrancar();
+        })();
       })();
     </script>
   </body>

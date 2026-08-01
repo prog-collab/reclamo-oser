@@ -139,6 +139,77 @@
     }
   }
 
+  // --- recuperar la contrasena ----------------------------------------------
+  //
+  // OJO con el "redirect_to": si no se lo mandamos, Supabase arma el link del
+  // mail con el "Site URL" del proyecto, que apunta a otra aplicacion
+  // (http://localhost:3000). Por eso el link llegaba a una pagina que no existe.
+  // Mandandolo explicito, el link siempre vuelve a este panel.
+
+  async function pedirRecuperacion(email, urlDeVuelta) {
+    const res = await fetch(`${BASE}/auth/v1/recover?redirect_to=${encodeURIComponent(urlDeVuelta)}`, {
+      method: 'POST',
+      headers: { apikey: KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email.trim().toLowerCase() }),
+    });
+    if (!res.ok) throw await leerError(res);
+  }
+
+  // Lee lo que deja el link del mail en el # de la URL.
+  // Devuelve null si no hay nada nuestro, {error} si el link vencio o ya se uso,
+  // o los tokens si el link era valido.
+  function leerHashDeRecuperacion() {
+    const hash = (location.hash || '').replace(/^#/, '');
+    if (!hash) return null;
+    const p = new URLSearchParams(hash);
+    if (p.get('error') || p.get('error_code')) {
+      return {
+        error: p.get('error_code') || p.get('error'),
+        descripcion: p.get('error_description') || '',
+      };
+    }
+    if (p.get('type') === 'recovery' && p.get('access_token')) {
+      return { access_token: p.get('access_token'), refresh_token: p.get('refresh_token') || '' };
+    }
+    return null;
+  }
+
+  // Saca el # de la barra de direcciones: adentro viaja un token de sesion y no
+  // queremos que quede en el historial ni que se recargue dos veces.
+  function limpiarHash() {
+    try {
+      history.replaceState(null, '', location.pathname + location.search);
+    } catch (_) {
+      location.hash = '';
+    }
+  }
+
+  // El link del mail ya trae una sesion valida (corta, y solo sirve para
+  // cambiar la contrasena). La guardamos y averiguamos de quien es.
+  async function tomarSesionDeRecuperacion(tokens) {
+    sessionStorage.setItem('oser_at', tokens.access_token || '');
+    sessionStorage.setItem('oser_rt', tokens.refresh_token || '');
+    sessionStorage.setItem('oser_email', '');
+    const res = await fetchAutenticado(`${BASE}/auth/v1/user`, {});
+    if (!res.ok) {
+      sesion.limpiar();
+      throw await leerError(res);
+    }
+    const user = await res.json();
+    sessionStorage.setItem('oser_email', user.email || '');
+    return user;
+  }
+
+  async function cambiarPassword(nueva) {
+    const res = await fetchAutenticado(`${BASE}/auth/v1/user`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: nueva }),
+    });
+    if (!res.ok) throw await leerError(res);
+    return res.json();
+  }
+
   // Fetch con el token del admin. Si el token vencio, lo renueva y reintenta una vez.
   async function fetchAutenticado(url, opciones, yaReintento) {
     const at = sesion.access;
@@ -231,6 +302,11 @@
     iniciarSesion,
     renovarSesion,
     cerrarSesion,
+    pedirRecuperacion,
+    leerHashDeRecuperacion,
+    limpiarHash,
+    tomarSesionDeRecuperacion,
+    cambiarPassword,
     traerReclamos,
     linkDescarga,
     bajarArchivo,
