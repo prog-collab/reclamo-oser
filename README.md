@@ -51,7 +51,31 @@ Se entra por `panel.html` con email y contraseña. Muestra:
 - **Descargar todos los archivos** — junta todo en un ZIP, con una carpeta por
   persona (`Nombre - DNI/`).
 - **ZIP** por fila, para bajar los archivos de una sola persona.
+- **Subir recibo** por fila, para cargarle el recibo a quien no lo adjuntó (ver
+  abajo).
 - **Borrar** una adhesión (borra también sus archivos).
+
+Al lado del nombre aparece **falta recibo** en rojo cuando esa persona no tiene
+ninguno cargado. Se mira solo el recibo, no el total de archivos: alguien puede
+haber mandado una captura del adicional y aun así deber el recibo, que es la
+prueba principal. La marca va pegada al nombre y no en la columna de archivos
+—que es donde uno la buscaría— porque esa columna queda tapada por la de
+acciones hasta que se scrollea la tabla a la derecha.
+
+### Cargarle el recibo a alguien
+
+Varios se inscribieron sin adjuntar el recibo y después lo acercaron por otro
+lado: en papel, por WhatsApp, contestando el mail de confirmación con la foto.
+El botón **Subir recibo** de esa fila lo carga en su adhesión.
+
+Acepta fotos y PDF, varios archivos de una vez, hasta 15 MB cada uno — lo mismo
+que el formulario. El archivo queda **igual que si lo hubiera subido esa
+persona**, así que entra solo en el ZIP, en el Excel y en los totales; no queda
+marcado aparte. Cuando ya tiene alguno, el botón dice **+ Recibo** y sirve para
+agregarle otro (por ejemplo, uno que se ve mejor).
+
+Ojo: la persona **no recibe ningún aviso** de que se lo cargaste. Si querés que
+se entere, avisale por otro lado.
 
 El Excel y el ZIP salen con lo que estés viendo en la tabla: si escribís algo en
 el buscador, exporta solo eso.

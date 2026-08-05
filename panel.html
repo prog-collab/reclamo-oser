@@ -7,11 +7,11 @@
     <meta name="robots" content="noindex, nofollow" />
     <meta name="theme-color" content="#1f3a5f" />
     <!-- Version de esta pagina: la compara recarga.js contra version.json. -->
-    <meta name="oser-version" content="5" />
+    <meta name="oser-version" content="6" />
     <!-- Pedido (no garantizado) de que el navegador revalide el .html en vez de
          sacarlo de su cache. El que realmente arregla el problema es recarga.js. -->
     <meta http-equiv="cache-control" content="no-cache" />
-    <link rel="stylesheet" href="styles.css?v=5" />
+    <link rel="stylesheet" href="styles.css?v=6" />
     <style>
       /* --- barra superior --- */
       .barra {
@@ -153,6 +153,19 @@
       .acciones {
         display: flex;
         gap: 6px;
+      }
+      /* El recibo es la prueba principal del reclamo: que falte tiene que
+         saltar a la vista, y no confundirse con "no adjunto nada mas". */
+      .marca-falta {
+        display: inline-block;
+        margin-left: 8px;
+        padding: 2px 9px;
+        border-radius: 99px;
+        font-size: 0.76rem;
+        font-weight: 700;
+        white-space: nowrap;
+        background: var(--mal-tenue);
+        color: var(--mal);
       }
 
       /* --- detalle de archivos --- */
@@ -337,15 +350,15 @@
           <br />
           <!-- Sirve para darse cuenta de un vistazo si el navegador esta mostrando
                una version vieja del panel. Tiene que coincidir con version.json. -->
-          <span class="pie-version">Panel versión 5</span>
+          <span class="pie-version">Panel versión 6</span>
         </p>
       </div>
     </div>
 
-    <script src="recarga.js?v=5"></script>
-    <script src="config.js?v=5"></script>
-    <script src="sb.js?v=5"></script>
-    <script src="export.js?v=5"></script>
+    <script src="recarga.js?v=6"></script>
+    <script src="config.js?v=6"></script>
+    <script src="sb.js?v=6"></script>
+    <script src="export.js?v=6"></script>
     <script>
       (function () {
         const SB = window.SB;
@@ -433,6 +446,19 @@
 
         function archivosDe(r, tipo) {
           return (r.oser_reclamo_archivos || []).filter((a) => a.tipo === tipo);
+        }
+
+        // Nombre apto para el storage: sin acentos ni caracteres raros. Es el
+        // mismo criterio que usa el formulario publico; nombreSeguro() de aca
+        // arriba es otra cosa (sirve para los nombres de adentro del ZIP, que
+        // si admiten acentos y espacios).
+        function nombreParaStorage(nombre) {
+          const limpio = String(nombre || '')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '') // saca acentos
+            .replace(/[^a-zA-Z0-9._-]+/g, '-')
+            .replace(/^-+|-+$/g, '');
+          return (limpio || 'archivo').slice(-80);
         }
 
         // Las respuestas de los gremios son 'si' | 'no' | 'no_se'.
@@ -726,6 +752,20 @@
             } else {
               celdas[9].innerHTML = '<span class="marca-no">sin archivos</span>';
             }
+            // La marca de "falta recibo" va pegada al nombre y no en la columna
+            // de archivos, que es donde uno la buscaria: esa columna queda
+            // tapada por la de acciones hasta que se scrollea la tabla a la
+            // derecha, y esto justamente tiene que verse sin buscarlo.
+            //
+            // Se mira solo el recibo, no el total de archivos: alguien puede
+            // haber mandado una captura del adicional y aun asi deber el
+            // recibo, que es la prueba principal.
+            if (!recibos.length) {
+              const falta = document.createElement('span');
+              falta.className = 'marca-falta';
+              falta.textContent = 'falta recibo';
+              celdas[1].appendChild(falta);
+            }
 
             // acciones
             const acciones = document.createElement('div');
@@ -739,6 +779,16 @@
               zip.addEventListener('click', () => zipDeUno(r, zip));
               acciones.appendChild(zip);
             }
+            const subir = document.createElement('button');
+            subir.type = 'button';
+            subir.className = 'boton suave chico';
+            subir.textContent = recibos.length ? '+ Recibo' : 'Subir recibo';
+            subir.title = recibos.length
+              ? 'Agregarle otro recibo de sueldo a esta persona'
+              : 'Subirle el recibo de sueldo que no adjuntó';
+            subir.addEventListener('click', () => subirRecibo(r, subir));
+            acciones.appendChild(subir);
+
             const borrar = document.createElement('button');
             borrar.type = 'button';
             borrar.className = 'boton peligro chico';
@@ -806,6 +856,106 @@
               cuerpo.appendChild(trd);
             }
           });
+        }
+
+        // --- subir un recibo desde el panel -------------------------------------
+        // Para el que se inscribio sin adjuntarlo y despues lo acerco por otro
+        // lado: lo trajo en papel, lo mando por WhatsApp, contesto el mail de
+        // confirmacion con la foto. El archivo queda igual que si lo hubiera
+        // subido esa persona, asi que entra solo en el ZIP y en el Excel.
+        //
+        // Sube con la clave anonima, como el formulario publico: el bucket
+        // acepta subir pero no listar ni leer, y la ruta lleva el id del
+        // reclamo, que es lo que valida oser_registrar_archivo del lado del
+        // servidor. Para VER lo subido si hace falta la sesion de admin.
+        async function subirRecibo(r, boton) {
+          const input = document.createElement('input');
+          input.type = 'file';
+          input.accept = 'image/*,application/pdf';
+          input.multiple = true;
+          input.style.display = 'none';
+          document.body.appendChild(input);
+
+          input.addEventListener('change', async () => {
+            const elegidos = Array.from(input.files || []);
+            input.remove();
+            if (!elegidos.length) return;
+
+            limpiarAvisos();
+            const tope = (window.RECLAMO_CONFIG || {}).maxArchivoBytes || 15 * 1024 * 1024;
+
+            const pesados = elegidos.filter((f) => f.size > tope);
+            if (pesados.length) {
+              return error(
+                'Estos archivos pesan más de ' +
+                  pesoLegible(tope) +
+                  ' y no se pueden subir: ' +
+                  pesados.map((f) => f.name).join(', ') +
+                  '.'
+              );
+            }
+            // Un archivo de 0 bytes pasa el control de tamaño pero el servidor
+            // lo rechaza. Pasa cuando viene de Drive o de WhatsApp sin bajarlo.
+            const vacios = elegidos.filter((f) => f.size === 0);
+            if (vacios.length) {
+              return error(
+                'Estos archivos llegaron vacíos (0 bytes): ' +
+                  vacios.map((f) => f.name).join(', ') +
+                  '. Bajalos primero al disco y subilos de nuevo.'
+              );
+            }
+
+            const textoOriginal = boton.textContent;
+            boton.disabled = true;
+            const fallados = [];
+            let subidos = 0;
+
+            try {
+              for (let i = 0; i < elegidos.length; i++) {
+                const file = elegidos[i];
+                boton.textContent =
+                  elegidos.length > 1 ? 'Subiendo ' + (i + 1) + ' de ' + elegidos.length + '…' : 'Subiendo…';
+                // El sello de tiempo evita pisar un archivo que ya tenga ese
+                // nombre: la clave anonima no puede listar la carpeta, asi que
+                // no hay forma de mirar antes que hay adentro.
+                const path = r.id + '/recibo/' + Date.now() + '-' + nombreParaStorage(file.name);
+                try {
+                  await SB.subirArchivo(path, file);
+                  await SB.rpc('oser_registrar_archivo', {
+                    p_reclamo_id: r.id,
+                    p_tipo: 'recibo',
+                    p_path: path,
+                    p_nombre_original: file.name,
+                    p_tamano: file.size,
+                    p_mime: file.type || '',
+                  });
+                  subidos++;
+                } catch (err) {
+                  fallados.push(file.name + ' → ' + (err.message || 'error desconocido'));
+                }
+              }
+            } finally {
+              boton.disabled = false;
+              boton.textContent = textoOriginal;
+            }
+
+            if (subidos) {
+              // Dejamos la fila abierta para que se vea lo que quedo cargado.
+              abiertos.add(r.id);
+              await cargar();
+            }
+            if (fallados.length) {
+              error('No se pudieron subir: ' + fallados.join(' | '));
+            } else {
+              ok(
+                subidos === 1
+                  ? 'Recibo cargado en la adhesión de ' + r.nombre + '.'
+                  : subidos + ' recibos cargados en la adhesión de ' + r.nombre + '.'
+              );
+            }
+          });
+
+          input.click();
         }
 
         // --- borrar ------------------------------------------------------------
