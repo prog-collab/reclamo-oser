@@ -11,11 +11,11 @@
     <meta name="robots" content="noindex, nofollow" />
     <meta name="theme-color" content="#1f3a5f" />
     <!-- Version de esta pagina: la compara recarga.js contra version.json. -->
-    <meta name="oser-version" content="4" />
+    <meta name="oser-version" content="5" />
     <!-- Pedido (no garantizado) de que el navegador revalide el .html en vez de
          sacarlo de su cache. El que realmente arregla el problema es recarga.js. -->
     <meta http-equiv="cache-control" content="no-cache" />
-    <link rel="stylesheet" href="styles.css?v=4" />
+    <link rel="stylesheet" href="styles.css?v=5" />
   </head>
   <body>
     <div class="envoltorio">
@@ -198,8 +198,8 @@
         <div class="tilde" aria-hidden="true">✓</div>
         <h2>Listo, quedó registrada tu adhesión</h2>
         <p id="textoListo">
-          Ya tenemos tus datos y tus archivos. Si hace falta algo más, te vamos a contactar por
-          teléfono o por email.
+          Ya tenemos tus datos y tus archivos. En un rato te llega un mail de confirmación con el
+          detalle de todo lo que cargaste, para que puedas revisarlo.
         </p>
       </section>
 
@@ -209,9 +209,9 @@
       </p>
     </div>
 
-    <script src="recarga.js?v=4"></script>
-    <script src="config.js?v=4"></script>
-    <script src="sb.js?v=4"></script>
+    <script src="recarga.js?v=5"></script>
+    <script src="config.js?v=5"></script>
+    <script src="sb.js?v=5"></script>
     <script>
       (function () {
         const cfg = window.RECLAMO_CONFIG;
@@ -557,6 +557,16 @@
                 ' archivo(s) no se pudieron subir. Mandale este detalle a quien lleva el ' +
                 'reclamo y acercale los archivos por otro medio: ' +
                 fallados.join(' | ');
+            } else {
+              // Le repetimos la direccion: si se equivoco al escribirla, es
+              // ahora cuando se da cuenta, no cuando no le llega nada.
+              const correo = document.getElementById('email').value.trim();
+              document.getElementById('textoListo').textContent =
+                'Ya tenemos tus datos y tus archivos. En un rato te llega un mail de confirmación ' +
+                'a ' +
+                correo +
+                ' con el detalle de todo lo que cargaste, para que puedas revisarlo. Si no lo ves, ' +
+                'fijate en la carpeta de correo no deseado.';
             }
             pantalla.classList.remove('oculto');
             pantalla.scrollIntoView({ behavior: 'smooth', block: 'center' });
